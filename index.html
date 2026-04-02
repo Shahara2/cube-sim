@@ -1,0 +1,511 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.w{padding:1rem 0;font-family:var(--font-sans);color:var(--color-text-primary);direction:rtl}
+.tabs{display:flex;gap:6px;margin-bottom:1rem}
+.tab{padding:6px 14px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-secondary);font-size:13px;cursor:pointer;transition:all .15s}
+.tab.active{background:#E6F1FB;border-color:#378ADD;color:#0C447C;font-weight:500}
+.panel{display:none}.panel.active{display:block}
+
+.eq-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.eq-row{display:flex;align-items:center;gap:8px;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:8px 12px}
+.eq-row.current{border-color:#378ADD;background:#E6F1FB}
+.eq-row.done{border-color:#639922;background:#EAF3DE}
+.eq-num{font-size:12px;color:var(--color-text-tertiary);min-width:18px}
+.eq-text{flex:1;font-size:14px;font-weight:500}
+.eq-badge{font-size:11px;padding:2px 8px;border-radius:99px}
+.badge-done{background:#C0DD97;color:#27500A}
+.badge-curr{background:#B5D4F4;color:#0C447C}
+.badge-todo{background:var(--color-background-secondary);color:var(--color-text-tertiary)}
+
+.add-row{display:flex;gap:8px;align-items:center;margin-top:4px}
+.add-row input{flex:1;height:34px;padding:0 10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);font-size:13px;background:var(--color-background-primary);color:var(--color-text-primary)}
+.add-row button,.icon-btn{height:34px;padding:0 12px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-size:13px;cursor:pointer}
+.icon-btn{padding:0 8px}
+
+.scale-wrap{width:100%;margin:0 0 .75rem}
+canvas#scaleCanvas{width:100%;display:block}
+
+.eq-big{text-align:center;font-size:22px;font-weight:500;margin:.5rem 0;min-height:36px;line-height:1.4}
+.step-indicator{display:flex;gap:8px;justify-content:center;margin-bottom:.75rem}
+.step-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-secondary)}
+.step-dot.active{background:#E6F1FB;border-color:#378ADD;color:#0C447C}
+.step-dot.done{background:#EAF3DE;border-color:#639922;color:#27500A}
+
+.hint-box{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:8px 12px;font-size:13px;color:var(--color-text-secondary);margin-bottom:.75rem;min-height:34px;text-align:center}
+
+.ctrl-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:.75rem}
+.ops-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.op-btn{padding:7px 4px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-size:13px;font-weight:500;cursor:pointer;text-align:center;transition:background .12s}
+.op-btn:hover{background:var(--color-background-secondary)}
+.op-btn.sel{background:#E6F1FB;border-color:#378ADD;color:#0C447C}
+.op-btn:disabled{opacity:.35;cursor:not-allowed}
+.inp-row{display:flex;gap:6px;align-items:center}
+.num-inp{flex:1;height:34px;padding:0 10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);font-size:14px;background:var(--color-background-primary);color:var(--color-text-primary)}
+.x-tog{padding:0 12px;height:34px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-secondary);font-size:13px;cursor:pointer;transition:all .12s;white-space:nowrap}
+.x-tog.on{background:#EAF3DE;border-color:#3B6D11;color:#27500A;font-weight:500}
+.apply-btn{padding:0 14px;height:34px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-size:13px;font-weight:500;cursor:pointer}
+.apply-btn:hover{background:var(--color-background-secondary)}
+.apply-btn:disabled{opacity:.35;cursor:not-allowed}
+.err{font-size:12px;color:var(--color-text-danger);min-height:16px;margin-top:4px}
+
+.history-row{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:.5rem;min-height:22px}
+.chip{font-size:11px;padding:2px 8px;border-radius:99px;background:var(--color-background-secondary);color:var(--color-text-secondary);border:0.5px solid var(--color-border-tertiary)}
+
+.solved-bar{text-align:center;padding:10px;border-radius:var(--border-radius-md);background:#EAF3DE;color:#27500A;font-size:15px;font-weight:500;border:0.5px solid #639922;margin-bottom:8px;opacity:0;transition:opacity .4s}
+.solved-bar.show{opacity:1}
+
+.bot-row{display:flex;gap:8px;margin-top:8px}
+.sm-btn{padding:0 12px;height:30px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-tertiary);background:transparent;color:var(--color-text-secondary);font-size:12px;cursor:pointer}
+.sm-btn:hover{background:var(--color-background-secondary)}
+
+.anim-notice{text-align:center;font-size:12px;color:var(--color-text-secondary);padding:4px;opacity:0;transition:opacity .3s;min-height:20px}
+.anim-notice.show{opacity:1}
+</style>
+
+<div class="w">
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('sim')">סימולציה</button>
+  <button class="tab" onclick="switchTab('eqs')">רשימת תרגילים</button>
+</div>
+
+<div class="panel active" id="panel-sim">
+  <div class="step-indicator" id="step-ind"></div>
+  <div class="eq-big" id="eq-big"></div>
+  <div class="hint-box" id="hint-box"></div>
+  <div class="scale-wrap"><canvas id="scaleCanvas" height="200"></canvas></div>
+  <div class="anim-notice" id="anim-notice">הוספנו לצד שמאל — המאזניים הטו! עכשיו מוסיפים לצד ימין...</div>
+  <div class="history-row" id="hist-row"></div>
+  <div class="solved-bar" id="solved-bar">x = <span id="x-val"></span> — המשוואה נפתרה!</div>
+  <div class="ctrl-card" id="ctrl-card">
+    <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:8px" id="ctrl-label">בחר פעולה:</div>
+    <div class="ops-grid" id="ops-grid">
+      <button class="op-btn sel" id="op-add" onclick="setOp('add')">+ חיבור</button>
+      <button class="op-btn" id="op-sub" onclick="setOp('sub')">− חיסור</button>
+      <button class="op-btn" id="op-mul" onclick="setOp('mul')">× כפל</button>
+      <button class="op-btn" id="op-div" onclick="setOp('div')">÷ חילוק</button>
+    </div>
+    <div class="inp-row">
+      <input class="num-inp" type="number" id="num-inp" value="1" step="1"/>
+      <button class="x-tog" id="x-tog" onclick="toggleX()">+ x</button>
+      <button class="apply-btn" id="apply-btn" onclick="startApply()">החל</button>
+    </div>
+    <div class="err" id="err-msg"></div>
+    <div class="bot-row">
+      <button class="sm-btn" onclick="resetCurrent()">איפוס תרגיל</button>
+      <button class="sm-btn" onclick="nextEq()">תרגיל הבא</button>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="panel-eqs">
+  <div class="eq-list" id="eq-list"></div>
+  <div class="add-row">
+    <input id="add-inp" placeholder="למשל: 3x+2=11" style="flex:1;height:34px;padding:0 10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);font-size:13px;background:var(--color-background-primary);color:var(--color-text-primary)"/>
+    <button onclick="addEquation()" style="height:34px;padding:0 14px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-size:13px;cursor:pointer">הוסף</button>
+    <button onclick="clearAll()" class="sm-btn" style="height:34px">נקה הכל</button>
+  </div>
+  <div class="err" id="parse-err"></div>
+  <div style="margin-top:10px;font-size:12px;color:var(--color-text-tertiary)">פורמט: ax+b=c  (למשל: 2x+3=9 או 4x=20)</div>
+</div>
+</div>
+
+<script>
+const W=680,H=200;
+let eqs=[
+  {raw:'2x=8',lx:2,ln:0,rx:0,rn:8,done:false},
+  {raw:'x+3=10',lx:1,ln:3,rx:0,rn:10,done:false},
+  {raw:'3x-1=8',lx:3,ln:-1,rx:0,rn:8,done:false},
+  {raw:'4x+2=14',lx:4,ln:2,rx:0,rn:14,done:false},
+];
+let curEqIdx=0;
+let state={lx:0,ln:0,rx:0,rn:0};
+let op='add',useX=false;
+let history=[];
+let step=1; // 1=transfer terms, 2=divide by coeff
+let animating=false;
+let pendingLeft=null; // after animating half-apply, store the "unbalanced" state
+let dpr=1;
+
+const canvas=document.getElementById('scaleCanvas');
+const ctx=canvas.getContext('2d');
+
+function resizeCanvas(){
+  dpr=window.devicePixelRatio||1;
+  const w=canvas.parentElement.clientWidth||400;
+  canvas.width=w*dpr;
+  canvas.height=H*dpr;
+  ctx.scale(dpr,dpr);
+  canvas._w=w;
+}
+
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.textContent===({sim:'סימולציה',eqs:'רשימת תרגילים'}[t])));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+t).classList.add('active');
+  if(t==='eqs') renderEqList();
+}
+
+function parseEq(s){
+  s=s.replace(/\s/g,'').toLowerCase();
+  const m=s.match(/^(-?\d*\.?\d*)x([+-]\d+\.?\d*)?=(-?\d+\.?\d*)$|^(-?\d+\.?\d*)=(-?\d*\.?\d*)x([+-]\d+\.?\d*)?$|^(-?\d*\.?\d*)x=(-?\d+\.?\d*)$/);
+  if(!m) return null;
+  let lx,ln,rn;
+  if(m[1]!==undefined&&m[3]!==undefined){
+    lx=m[1]===''||m[1]==='-'?(m[1]==='-'?-1:1):parseFloat(m[1]);
+    if(isNaN(lx)) lx=m[1]==='-'?-1:1;
+    ln=m[2]?parseFloat(m[2]):0;
+    rn=parseFloat(m[3]);
+  } else if(m[7]!==undefined){
+    const c=m[7];
+    lx=c===''||c==='-'?(c==='-'?-1:1):parseFloat(c);
+    if(isNaN(lx)) lx=c==='-'?-1:1;
+    ln=0;
+    rn=parseFloat(m[8]);
+  } else return null;
+  if(isNaN(lx)||isNaN(ln)||isNaN(rn)) return null;
+  return {lx,ln:ln,rx:0,rn};
+}
+
+function addEquation(){
+  const inp=document.getElementById('add-inp');
+  const err=document.getElementById('parse-err');
+  const p=parseEq(inp.value.trim());
+  if(!p){err.textContent='פורמט לא תקין. נסה: 2x+3=9';return;}
+  err.textContent='';
+  eqs.push({raw:inp.value.trim(),...p,done:false});
+  inp.value='';
+  renderEqList();
+}
+
+function clearAll(){
+  eqs=[]; renderEqList();
+}
+
+function renderEqList(){
+  const ul=document.getElementById('eq-list');
+  ul.innerHTML='';
+  eqs.forEach((e,i)=>{
+    const row=document.createElement('div');
+    row.className='eq-row'+(i===curEqIdx?' current':e.done?' done':'');
+    const badge=i===curEqIdx?'badge-curr':e.done?'badge-done':'badge-todo';
+    const label=i===curEqIdx?'נוכחי':e.done?'בוצע':'ממתין';
+    row.innerHTML=`<span class="eq-num">${i+1}</span><span class="eq-text">${e.raw}</span><span class="eq-badge ${badge}">${label}</span>
+    <button class="icon-btn" onclick="loadEqIdx(${i})">טען</button>
+    <button class="icon-btn" onclick="removeEq(${i})">✕</button>`;
+    ul.appendChild(row);
+  });
+}
+
+function removeEq(i){eqs.splice(i,1);if(curEqIdx>=eqs.length)curEqIdx=Math.max(0,eqs.length-1);renderEqList();}
+
+function loadEqIdx(i){
+  if(eqs.length===0) return;
+  curEqIdx=i;
+  const e=eqs[i];
+  state={lx:e.lx,ln:e.ln,rx:e.rx||0,rn:e.rn};
+  history=[];step=1;useX=false;pendingLeft=null;animating=false;
+  document.getElementById('x-tog').classList.remove('on');
+  document.getElementById('solved-bar').classList.remove('show');
+  document.getElementById('err-msg').textContent='';
+  document.getElementById('anim-notice').classList.remove('show');
+  determineStep();
+  renderAll();
+}
+
+function loadCurrentEq(){loadEqIdx(curEqIdx);}
+
+function nextEq(){
+  if(eqs.length===0) return;
+  curEqIdx=(curEqIdx+1)%eqs.length;
+  loadEqIdx(curEqIdx);
+}
+
+function resetCurrent(){loadCurrentEq();}
+
+function determineStep(){
+  const hasNonXOnLeft=state.ln!==0;
+  const hasXOnRight=state.rx!==0;
+  if(hasNonXOnLeft||hasXOnRight){
+    step=1;
+  } else if(state.lx!==1&&state.lx!==0){
+    step=2;
+  } else {
+    step=3;
+  }
+}
+
+function setOp(o){
+  op=o;
+  ['add','sub','mul','div'].forEach(x=>document.getElementById('op-'+x).classList.toggle('sel',x===o));
+}
+
+function toggleX(){
+  useX=!useX;
+  document.getElementById('x-tog').classList.toggle('on',useX);
+}
+
+function fmtSide(xc,n){
+  let p=[];
+  if(xc!==0){
+    if(xc===1) p.push('x');
+    else if(xc===-1) p.push('-x');
+    else p.push(xc+'x');
+  }
+  if(n!==0){
+    if(n>0&&xc!==0) p.push('+'+n);
+    else p.push(''+n);
+  }
+  if(p.length===0) return '0';
+  return p.join(' ');
+}
+
+function eqStr(s){return fmtSide(s.lx,s.ln)+' = '+fmtSide(s.rx,s.rn);}
+
+function getSolution(){
+  const dlx=state.lx-state.rx;
+  const drn=state.rn-state.ln;
+  if(dlx===0) return null;
+  if(drn%dlx===0) return drn/dlx;
+  return drn/dlx;
+}
+
+function isSolved(){return state.lx===1&&state.ln===0&&state.rx===0;}
+
+function applyToState(s,o,xc,nc){
+  let {lx,ln,rx,rn}=s;
+  if(o==='add'){lx+=xc;ln+=nc;rx+=xc;rn+=nc;}
+  else if(o==='sub'){lx-=xc;ln-=nc;rx-=xc;rn-=nc;}
+  else if(o==='mul'){lx*=nc;ln*=nc;rx*=nc;rn*=nc;}
+  else if(o==='div'){lx/=nc;ln/=nc;rx/=nc;rn/=nc;}
+  return{lx,ln,rx,rn};
+}
+
+function startApply(){
+  if(animating) return;
+  const err=document.getElementById('err-msg');
+  err.textContent='';
+  const raw=parseFloat(document.getElementById('num-inp').value);
+  const numVal=isNaN(raw)?0:raw;
+  const xc=useX?numVal:0;
+  const nc=useX?0:numVal;
+
+  if(op==='div'&&nc===0&&!useX){err.textContent='לא ניתן לחלק באפס';return;}
+  if(op==='mul'&&useX){err.textContent='כפל ב-x לא נתמך';return;}
+  if(op==='div'&&useX){err.textContent='חילוק ב-x לא נתמך';return;}
+  if(op==='mul'&&nc===0){err.textContent='כפל באפס לא מאפשר פתרון';return;}
+
+  const opSym={add:'+',sub:'−',mul:'×',div:'÷'}[op];
+  const opLabel=useX?`${opSym} ${numVal}x`:`${opSym} ${numVal}`;
+
+  animating=true;
+  document.getElementById('apply-btn').disabled=true;
+
+  // Phase 1: apply only to left side
+  const halfState={lx:state.lx,ln:state.ln,rx:state.rx,rn:state.rn};
+  if(op==='add'){halfState.lx+=xc;halfState.ln+=nc;}
+  else if(op==='sub'){halfState.lx-=xc;halfState.ln-=nc;}
+  else if(op==='mul'){halfState.lx*=nc;halfState.ln*=nc;}
+  else if(op==='div'){halfState.lx/=nc;halfState.ln/=nc;}
+
+  const notice=document.getElementById('anim-notice');
+  const verb=op==='add'?'הוספנו':op==='sub'?'הורדנו':op==='mul'?'הכפלנו':'חילקנו';
+  notice.textContent=`${verb} ${opLabel} לצד שמאל — המאזניים הטו! עכשיו ${op==='add'?'מוסיפים':op==='sub'?'מורידים':op==='mul'?'מכפילים':'מחלקים'} גם לצד ימין...`;
+  notice.classList.add('show');
+
+  drawScale(halfState);
+
+  setTimeout(()=>{
+    // Phase 2: apply to right side too
+    const fullState=applyToState(state,op,xc,nc);
+    state={...fullState};
+    history.push(opLabel);
+    determineStep();
+    notice.classList.remove('show');
+    animating=false;
+    document.getElementById('apply-btn').disabled=false;
+    useX=false;
+    document.getElementById('x-tog').classList.remove('on');
+    if(isSolved()){
+      eqs[curEqIdx].done=true;
+      document.getElementById('x-val').textContent=Math.round(state.rn*100)/100;
+      document.getElementById('solved-bar').classList.add('show');
+    }
+    renderAll();
+  },1200);
+
+  // also show immediate eq update
+  renderAll(halfState);
+}
+
+function getTilt(s){
+  const sol=getSolution();
+  if(sol===null) return 0;
+  const lv=s.lx*sol+s.ln;
+  const rv=s.rx*sol+s.rn;
+  const diff=lv-rv;
+  return Math.max(-14,Math.min(14,diff*2));
+}
+
+function drawScale(s){
+  const cw=canvas._w||400;
+  ctx.clearRect(0,0,cw,H);
+  const cx=cw/2;
+  const pivotY=100;
+  const tilt=getTilt(s);
+  const rad=tilt*Math.PI/180;
+  const armLen=cw*0.38;
+  const panW=Math.min(110,cw*0.25);
+  const panH=38;
+  const chainLen=28;
+
+  const isDark=window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const txtColor=isDark?'#c2c0b6':'#2C2C2A';
+  const borderColor=isDark?'rgba(255,255,255,0.25)':'rgba(0,0,0,0.25)';
+  const fillColor=isDark?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.04)';
+  const beamColor=isDark?'rgba(255,255,255,0.3)':'rgba(0,0,0,0.25)';
+  const pivotColor=isDark?'rgba(255,255,255,0.5)':'rgba(0,0,0,0.45)';
+
+  // pillar
+  ctx.fillStyle=beamColor;
+  ctx.beginPath();ctx.roundRect(cx-3,pivotY,6,75,2);ctx.fill();
+
+  // base
+  ctx.fillStyle=fillColor;ctx.strokeStyle=borderColor;ctx.lineWidth=0.5;
+  ctx.beginPath();
+  ctx.moveTo(cx-30,pivotY+75);ctx.lineTo(cx-55,pivotY+84);ctx.lineTo(cx+55,pivotY+84);ctx.lineTo(cx+30,pivotY+75);ctx.closePath();
+  ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.roundRect(cx-65,pivotY+84,130,8,3);ctx.fill();ctx.stroke();
+
+  // beam
+  const lEnd={x:cx-armLen*Math.cos(rad),y:pivotY+armLen*Math.sin(rad)};
+  const rEnd={x:cx+armLen*Math.cos(rad),y:pivotY-armLen*Math.sin(rad)};
+  ctx.save();ctx.translate(cx,pivotY);ctx.rotate(-rad);
+  ctx.fillStyle=fillColor;ctx.strokeStyle=beamColor;ctx.lineWidth=1;
+  ctx.beginPath();ctx.roundRect(-armLen,-3,armLen*2,7,3);ctx.fill();ctx.stroke();
+  ctx.restore();
+
+  // pivot circle
+  ctx.fillStyle=pivotColor;
+  ctx.beginPath();ctx.arc(cx,pivotY,6,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=isDark?'#1a1a1a':'#fff';
+  ctx.beginPath();ctx.arc(cx,pivotY,3,0,Math.PI*2);ctx.fill();
+
+  function drawPan(ex,ey,text,side){
+    // chain
+    ctx.strokeStyle=borderColor;ctx.lineWidth=1.2;ctx.setLineDash([3,3]);
+    ctx.beginPath();ctx.moveTo(ex,ey);ctx.lineTo(ex,ey+chainLen);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.strokeStyle=borderColor;ctx.lineWidth=0.5;
+    ctx.beginPath();ctx.moveTo(ex-panW/2,ey+chainLen);ctx.lineTo(ex+panW/2,ey+chainLen);ctx.stroke();
+
+    // pan box
+    const px=ex-panW/2, py=ey+chainLen;
+    const isSolvedSide=isSolved()&&(side==='left'||side==='right');
+    if(isSolvedSide){
+      ctx.fillStyle='#EAF3DE';ctx.strokeStyle='#639922';
+    } else {
+      ctx.fillStyle=side==='left'?'#E6F1FB':'#FAEEDA';
+      ctx.strokeStyle=side==='left'?'#378ADD':'#BA7517';
+    }
+    ctx.lineWidth=0.8;
+    ctx.beginPath();ctx.roundRect(px,py,panW,panH,6);ctx.fill();ctx.stroke();
+
+    // text
+    ctx.fillStyle=isSolvedSide?'#27500A':side==='left'?'#0C447C':'#633806';
+    ctx.font=`500 14px var(--font-sans, sans-serif)`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(text,ex,py+panH/2);
+  }
+
+  drawPan(lEnd.x,lEnd.y,fmtSide(s.lx,s.ln),'left');
+  drawPan(rEnd.x,rEnd.y,fmtSide(s.rx,s.rn),'right');
+
+  // side labels
+  ctx.fillStyle=isDark?'rgba(255,255,255,0.35)':'rgba(0,0,0,0.3)';
+  ctx.font=`11px var(--font-sans, sans-serif)`;
+  ctx.textAlign='center';ctx.textBaseline='alphabetic';
+  ctx.fillText('צד שמאל',lEnd.x,pivotY+75+chainLen+panH+14);
+  ctx.fillText('צד ימין',rEnd.x,pivotY+75+chainLen+panH+14);
+}
+
+function renderSteps(){
+  const ind=document.getElementById('step-ind');
+  ind.innerHTML='';
+  const steps=['העברת אגפים','חלוקה במקדם','פתרון'];
+  steps.forEach((s,i)=>{
+    const d=document.createElement('div');
+    const num=i+1;
+    const isDone=(num<step)||(isSolved()&&num===3);
+    const isActive=num===step&&!isSolved();
+    d.className='step-dot'+(isActive?' active':isDone?' done':'');
+    d.title=s;
+    d.textContent=num;
+    d.style.title=s;
+    ind.appendChild(d);
+    if(i<2){
+      const sep=document.createElement('div');
+      sep.style.cssText='height:1px;flex:1;background:var(--color-border-tertiary);align-self:center;margin:0 4px';
+      ind.appendChild(sep);
+    }
+  });
+  ind.style.display='flex';ind.style.alignItems='center';
+}
+
+function renderHint(){
+  const h=document.getElementById('hint-box');
+  const lbl=document.getElementById('ctrl-label');
+  if(isSolved()){
+    h.textContent='המשוואה נפתרה! ניתן לעבור לתרגיל הבא.';
+    return;
+  }
+  if(step===1){
+    const hasLN=state.ln!==0;
+    const hasRX=state.rx!==0;
+    if(hasLN&&state.ln>0) h.textContent=`שלב 1: העבר אגפים — חסר ${state.ln} משני הצדדים כדי להוציא מספרים לצד ימין.`;
+    else if(hasLN&&state.ln<0) h.textContent=`שלב 1: העבר אגפים — הוסף ${Math.abs(state.ln)} לשני הצדדים.`;
+    else if(hasRX) h.textContent=`שלב 1: העבר אגפים — חסר ${fmtSide(state.rx,0)}x משני הצדדים.`;
+    else h.textContent='שלב 1: העברת אגפים — אין מה להעביר, המשך לשלב 2.';
+    lbl.textContent='בחר פעולה (שלב 1 — העברת אגפים):';
+  } else if(step===2){
+    h.textContent=`שלב 2: חלוקה במקדם — חלק את שני הצדדים ב-${state.lx} כדי לבודד את x.`;
+    lbl.textContent='בחר פעולה (שלב 2 — חלוקה במקדם):';
+    document.getElementById('op-add').disabled=true;
+    document.getElementById('op-sub').disabled=true;
+    document.getElementById('op-mul').disabled=true;
+    setOp('div');
+  }
+  if(step===1){
+    ['op-add','op-sub','op-mul','op-div'].forEach(id=>document.getElementById(id).disabled=false);
+  }
+}
+
+function renderEq(){
+  const eq=document.getElementById('eq-big');
+  if(isSolved()){
+    eq.innerHTML=`<span style="color:#185FA5;background:#E6F1FB;border-radius:6px;padding:2px 14px">x = ${Math.round(state.rn*100)/100}</span>`;
+  } else {
+    eq.textContent=eqStr(state);
+  }
+}
+
+function renderHistory(){
+  const row=document.getElementById('hist-row');
+  row.innerHTML=history.map(h=>`<span class="chip">${h}</span>`).join('');
+}
+
+function renderAll(overrideState){
+  const s=overrideState||state;
+  resizeCanvas();
+  drawScale(s);
+  renderEq();
+  renderSteps();
+  renderHint();
+  renderHistory();
+}
+
+window.addEventListener('resize',()=>{if(!animating) renderAll();});
+
+// init
+if(eqs.length>0) loadEqIdx(0);
+</script>
