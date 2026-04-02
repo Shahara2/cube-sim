@@ -1,511 +1,587 @@
 
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-.w{padding:1rem 0;font-family:var(--font-sans);color:var(--color-text-primary);direction:rtl}
-.tabs{display:flex;gap:6px;margin-bottom:1rem}
-.tab{padding:6px 14px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-secondary);font-size:13px;cursor:pointer;transition:all .15s}
-.tab.active{background:#E6F1FB;border-color:#378ADD;color:#0C447C;font-weight:500}
-.panel{display:none}.panel.active{display:block}
+body{font-family:var(--font-sans,sans-serif);color:var(--color-text-primary);background:transparent}
+.hub{padding:.75rem 0;direction:rtl}
+.hub-tabs{display:flex;gap:0;margin-bottom:1rem;border-bottom:0.5px solid var(--color-border-tertiary)}
+.hub-tab{padding:7px 14px;border:none;background:transparent;color:var(--color-text-secondary);font-size:13px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;font-family:inherit}
+.hub-tab.active{color:#0C447C;border-bottom-color:#378ADD;font-weight:500}
+.sim-panel{display:none}.sim-panel.active{display:block}
 
-.eq-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
-.eq-row{display:flex;align-items:center;gap:8px;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:8px 12px}
-.eq-row.current{border-color:#378ADD;background:#E6F1FB}
-.eq-row.done{border-color:#639922;background:#EAF3DE}
-.eq-num{font-size:12px;color:var(--color-text-tertiary);min-width:18px}
-.eq-text{flex:1;font-size:14px;font-weight:500}
-.eq-badge{font-size:11px;padding:2px 8px;border-radius:99px}
-.badge-done{background:#C0DD97;color:#27500A}
-.badge-curr{background:#B5D4F4;color:#0C447C}
-.badge-todo{background:var(--color-background-secondary);color:var(--color-text-tertiary)}
+.progress-bar-wrap{margin-bottom:10px}
+.progress-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.progress-label{font-size:12px;color:var(--color-text-secondary)}
+.progress-count{font-size:12px;font-weight:500;color:#0C447C}
+.progress-track{height:6px;background:var(--color-background-secondary);border-radius:99px;overflow:hidden}
+.progress-fill{height:100%;background:#378ADD;border-radius:99px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.progress-dots{display:flex;gap:5px;margin-top:5px}
+.prog-dot{width:10px;height:10px;border-radius:50%;background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);transition:all .3s;cursor:pointer}
+.prog-dot.curr{background:#378ADD;border-color:#185FA5}
+.prog-dot.done{background:#3B6D11;border-color:#27500A}
 
-.add-row{display:flex;gap:8px;align-items:center;margin-top:4px}
-.add-row input{flex:1;height:34px;padding:0 10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);font-size:13px;background:var(--color-background-primary);color:var(--color-text-primary)}
-.add-row button,.icon-btn{height:34px;padding:0 12px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-size:13px;cursor:pointer}
-.icon-btn{padding:0 8px}
+.eq-layout{display:grid;grid-template-columns:1fr 210px;gap:10px;align-items:start}
+@media(max-width:500px){.eq-layout{grid-template-columns:1fr}}
 
-.scale-wrap{width:100%;margin:0 0 .75rem}
-canvas#scaleCanvas{width:100%;display:block}
+.scale-area{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:10px 10px 4px;overflow:hidden}
+canvas#sc{width:100%;display:block}
+.eq-display{text-align:center;font-size:20px;font-weight:500;margin:5px 0 2px;min-height:28px}
+.eq-orig{text-align:center;font-size:12px;color:var(--color-text-tertiary);margin-bottom:2px;min-height:16px}
+.eq-guide{text-align:center;font-size:12px;color:var(--color-text-secondary);margin-bottom:3px;min-height:15px}
+.anim-bar{text-align:center;font-size:11px;color:var(--color-text-secondary);min-height:15px;margin:2px 0}
 
-.eq-big{text-align:center;font-size:22px;font-weight:500;margin:.5rem 0;min-height:36px;line-height:1.4}
-.step-indicator{display:flex;gap:8px;justify-content:center;margin-bottom:.75rem}
-.step-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-secondary)}
-.step-dot.active{background:#E6F1FB;border-color:#378ADD;color:#0C447C}
-.step-dot.done{background:#EAF3DE;border-color:#639922;color:#27500A}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.clabel{font-size:10px;color:var(--color-text-tertiary);margin-bottom:6px;font-weight:500;letter-spacing:.05em;text-transform:uppercase}
 
-.hint-box{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:8px 12px;font-size:13px;color:var(--color-text-secondary);margin-bottom:.75rem;min-height:34px;text-align:center}
-
-.ctrl-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:.75rem}
-.ops-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
-.op-btn{padding:7px 4px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-size:13px;font-weight:500;cursor:pointer;text-align:center;transition:background .12s}
+.ops-2col{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:5px}
+.op-btn{padding:6px 4px;border-radius:6px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-size:13px;cursor:pointer;text-align:center;transition:background .1s;font-family:inherit;font-weight:500}
 .op-btn:hover{background:var(--color-background-secondary)}
 .op-btn.sel{background:#E6F1FB;border-color:#378ADD;color:#0C447C}
-.op-btn:disabled{opacity:.35;cursor:not-allowed}
-.inp-row{display:flex;gap:6px;align-items:center}
-.num-inp{flex:1;height:34px;padding:0 10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);font-size:14px;background:var(--color-background-primary);color:var(--color-text-primary)}
-.x-tog{padding:0 12px;height:34px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-secondary);font-size:13px;cursor:pointer;transition:all .12s;white-space:nowrap}
-.x-tog.on{background:#EAF3DE;border-color:#3B6D11;color:#27500A;font-weight:500}
-.apply-btn{padding:0 14px;height:34px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-size:13px;font-weight:500;cursor:pointer}
-.apply-btn:hover{background:var(--color-background-secondary)}
-.apply-btn:disabled{opacity:.35;cursor:not-allowed}
-.err{font-size:12px;color:var(--color-text-danger);min-height:16px;margin-top:4px}
 
-.history-row{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:.5rem;min-height:22px}
-.chip{font-size:11px;padding:2px 8px;border-radius:99px;background:var(--color-background-secondary);color:var(--color-text-secondary);border:0.5px solid var(--color-border-tertiary)}
+.x-section{margin-top:2px}
+.x-coef-row{display:flex;gap:5px;align-items:center;margin-bottom:5px}
+.x-coef-label{font-size:11px;color:var(--color-text-tertiary);white-space:nowrap}
+.x-coef-inp{width:50px;height:28px;padding:0 6px;border:0.5px solid var(--color-border-secondary);border-radius:6px;font-size:13px;background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit;text-align:center}
+.x-row{display:flex;gap:5px}
+.x-btn{flex:1;height:30px;padding:0;border-radius:6px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-secondary);font-size:13px;cursor:pointer;font-family:inherit;font-weight:500;transition:all .12s}
+.x-btn:hover{background:var(--color-background-secondary)}
+.x-btn.on{background:#EAF3DE;border-color:#3B6D11;color:#27500A}
 
-.solved-bar{text-align:center;padding:10px;border-radius:var(--border-radius-md);background:#EAF3DE;color:#27500A;font-size:15px;font-weight:500;border:0.5px solid #639922;margin-bottom:8px;opacity:0;transition:opacity .4s}
-.solved-bar.show{opacity:1}
+.divider{height:0.5px;background:var(--color-border-tertiary);margin:8px 0}
 
-.bot-row{display:flex;gap:8px;margin-top:8px}
-.sm-btn{padding:0 12px;height:30px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-tertiary);background:transparent;color:var(--color-text-secondary);font-size:12px;cursor:pointer}
+.exec-row{display:flex;gap:6px;align-items:center;margin-top:8px}
+.num-inp{width:52px;height:36px;padding:0 6px;border:0.5px solid var(--color-border-secondary);border-radius:6px;font-size:14px;background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit;text-align:center}
+.preview-box{flex:1;height:36px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:500;color:var(--color-text-primary)}
+.exec-btn{height:36px;padding:0 14px;border-radius:8px;border:none;background:#185FA5;color:#fff;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .15s}
+.exec-btn:hover{background:#0C447C}
+.exec-btn:disabled{background:var(--color-border-secondary);cursor:not-allowed}
+
+.err-msg{font-size:11px;color:var(--color-text-danger);min-height:13px;margin-top:3px}
+
+.log-card{max-height:140px;overflow-y:auto}
+.log-entry{font-size:12px;padding:3px 0;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;gap:8px}
+.log-entry:last-child{border-bottom:none}
+.log-op{color:var(--color-text-secondary);min-width:38px;font-size:11px;flex-shrink:0}
+.log-eq{color:var(--color-text-primary);font-weight:500}
+
+.solved-banner{padding:8px;border-radius:8px;background:#EAF3DE;color:#27500A;border:0.5px solid #3B6D11;text-align:center;font-size:14px;font-weight:500;margin-bottom:8px;display:none}
+.solved-banner.show{display:block}
+
+.nav-row{display:flex;gap:5px;flex-wrap:wrap}
+.sm-btn{height:30px;padding:0 10px;border-radius:6px;border:0.5px solid var(--color-border-tertiary);background:transparent;color:var(--color-text-secondary);font-size:12px;cursor:pointer;font-family:inherit}
 .sm-btn:hover{background:var(--color-background-secondary)}
 
-.anim-notice{text-align:center;font-size:12px;color:var(--color-text-secondary);padding:4px;opacity:0;transition:opacity .3s;min-height:20px}
-.anim-notice.show{opacity:1}
+.eq-row2{display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;border:0.5px solid var(--color-border-tertiary);margin-bottom:4px;font-size:13px;background:var(--color-background-primary);cursor:pointer;transition:background .1s}
+.eq-row2:hover{background:var(--color-background-secondary)}
+.eq-row2.curr{background:#E6F1FB;border-color:#378ADD}
+.eq-row2.done2{background:#EAF3DE;border-color:#3B6D11}
+.eq-num2{font-size:11px;color:var(--color-text-tertiary);min-width:16px}
+.eq-txt2{flex:1;font-weight:500}
+.dot-b{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dot-c{background:#378ADD}.dot-d{background:#3B6D11}.dot-t{background:var(--color-border-secondary)}
+
+.add-eq-row{display:flex;gap:5px;margin-top:8px}
+.add-eq-inp{flex:1;height:30px;padding:0 8px;border:0.5px solid var(--color-border-secondary);border-radius:6px;font-size:12px;background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit}
+
+.coming{display:flex;align-items:center;justify-content:center;height:200px;color:var(--color-text-tertiary);font-size:14px;flex-direction:column;gap:8px}
 </style>
 
-<div class="w">
-<div class="tabs">
-  <button class="tab active" onclick="switchTab('sim')">סימולציה</button>
-  <button class="tab" onclick="switchTab('eqs')">רשימת תרגילים</button>
+<div class="hub">
+<div class="hub-tabs">
+  <button class="hub-tab active" onclick="hubTab('eq',this)">משוואה בנעלם אחד</button>
+  <button class="hub-tab" onclick="hubTab('exercises',this)">תרגילים</button>
+  <button class="hub-tab" onclick="hubTab('par',this)">פרבולות</button>
 </div>
 
-<div class="panel active" id="panel-sim">
-  <div class="step-indicator" id="step-ind"></div>
-  <div class="eq-big" id="eq-big"></div>
-  <div class="hint-box" id="hint-box"></div>
-  <div class="scale-wrap"><canvas id="scaleCanvas" height="200"></canvas></div>
-  <div class="anim-notice" id="anim-notice">הוספנו לצד שמאל — המאזניים הטו! עכשיו מוסיפים לצד ימין...</div>
-  <div class="history-row" id="hist-row"></div>
-  <div class="solved-bar" id="solved-bar">x = <span id="x-val"></span> — המשוואה נפתרה!</div>
-  <div class="ctrl-card" id="ctrl-card">
-    <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:8px" id="ctrl-label">בחר פעולה:</div>
-    <div class="ops-grid" id="ops-grid">
-      <button class="op-btn sel" id="op-add" onclick="setOp('add')">+ חיבור</button>
-      <button class="op-btn" id="op-sub" onclick="setOp('sub')">− חיסור</button>
-      <button class="op-btn" id="op-mul" onclick="setOp('mul')">× כפל</button>
-      <button class="op-btn" id="op-div" onclick="setOp('div')">÷ חילוק</button>
+<div class="sim-panel active" id="hub-eq">
+
+  <div class="progress-bar-wrap">
+    <div class="progress-top">
+      <span class="progress-label" id="prog-label">פתרת 0 תרגילים מתוך 6</span>
+      <span class="progress-count" id="prog-count">0%</span>
     </div>
-    <div class="inp-row">
-      <input class="num-inp" type="number" id="num-inp" value="1" step="1"/>
-      <button class="x-tog" id="x-tog" onclick="toggleX()">+ x</button>
-      <button class="apply-btn" id="apply-btn" onclick="startApply()">החל</button>
+    <div class="progress-track"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+    <div class="progress-dots" id="prog-dots"></div>
+  </div>
+
+  <div class="eq-layout">
+    <div>
+      <div class="scale-area">
+        <canvas id="sc" height="185"></canvas>
+        <div class="eq-display" id="eq-disp"></div>
+        <div class="eq-orig" id="eq-orig"></div>
+        <div class="eq-guide" id="eq-guide"></div>
+        <div class="anim-bar" id="anim-bar"></div>
+      </div>
+      <div class="card" style="margin-top:8px">
+        <div class="clabel">יומן פתרון</div>
+        <div class="log-card" id="log-area"></div>
+      </div>
+      <div class="solved-banner" id="solved-banner"></div>
     </div>
-    <div class="err" id="err-msg"></div>
-    <div class="bot-row">
-      <button class="sm-btn" onclick="resetCurrent()">איפוס תרגיל</button>
-      <button class="sm-btn" onclick="nextEq()">תרגיל הבא</button>
+
+    <div>
+      <div class="card">
+        <div class="clabel">פעולה על מספר</div>
+        <div class="ops-2col">
+          <button class="op-btn sel" id="op-add" onclick="selOp('add')">+ חיבור</button>
+          <button class="op-btn" id="op-sub" onclick="selOp('sub')">− חיסור</button>
+        </div>
+        <div class="ops-2col">
+          <button class="op-btn" id="op-mul" onclick="selOp('mul')">· כפל</button>
+          <button class="op-btn" id="op-div" onclick="selOp('div')">÷ חילוק</button>
+        </div>
+
+        <div class="divider"></div>
+        <div class="clabel">פעולה על הנעלם x</div>
+        <div class="x-section">
+          <div class="x-coef-row">
+            <span class="x-coef-label">מקדם:</span>
+            <input class="x-coef-inp" type="number" id="x-coef" value="1" step="1" min="1" oninput="updPreview()"/>
+          </div>
+          <div class="x-row">
+            <button class="x-btn" id="xadd-btn" onclick="selXOp('add')">+ x</button>
+            <button class="x-btn" id="xsub-btn" onclick="selXOp('sub')">− x</button>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+        <div class="exec-row">
+          <input class="num-inp" type="number" id="num-inp" value="1" step="1" oninput="updPreview()"/>
+          <div class="preview-box" id="preview-box">+1</div>
+          <button class="exec-btn" id="exec-btn" onclick="doApply()">בצע</button>
+        </div>
+        <div class="err-msg" id="err-msg"></div>
+      </div>
+
+      <div class="card">
+        <div class="clabel">ניווט</div>
+        <div class="nav-row">
+          <button class="sm-btn" onclick="resetCurr()">איפוס</button>
+          <button class="sm-btn" onclick="nextEq()">הבא »</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
-<div class="panel" id="panel-eqs">
-  <div class="eq-list" id="eq-list"></div>
-  <div class="add-row">
-    <input id="add-inp" placeholder="למשל: 3x+2=11" style="flex:1;height:34px;padding:0 10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);font-size:13px;background:var(--color-background-primary);color:var(--color-text-primary)"/>
-    <button onclick="addEquation()" style="height:34px;padding:0 14px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-size:13px;cursor:pointer">הוסף</button>
-    <button onclick="clearAll()" class="sm-btn" style="height:34px">נקה הכל</button>
+<div class="sim-panel" id="hub-exercises">
+  <div class="card">
+    <div class="clabel">רשימת תרגילים</div>
+    <div id="eq-list"></div>
+    <div class="add-eq-row">
+      <input class="add-eq-inp" id="add-inp" placeholder="הוסף משוואה: 2x+3=9 / 2(x+1)=10 / x/2+1=5"/>
+      <button class="sm-btn" onclick="addEq()">הוסף</button>
+      <button class="sm-btn" onclick="resetAll()">איפוס</button>
+    </div>
+    <div class="err-msg" id="add-err"></div>
+    <div style="margin-top:8px;font-size:11px;color:var(--color-text-tertiary)">
+      פורמט: ax+b=c · 2(x+1)=10 · x/2+1=5
+    </div>
   </div>
-  <div class="err" id="parse-err"></div>
-  <div style="margin-top:10px;font-size:12px;color:var(--color-text-tertiary)">פורמט: ax+b=c  (למשל: 2x+3=9 או 4x=20)</div>
+</div>
+
+<div class="sim-panel" id="hub-par">
+  <div class="coming">
+    <svg width="40" height="32" viewBox="0 0 40 32" fill="none"><path d="M2 30 Q20 2 38 30" stroke="var(--color-border-secondary)" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+    <span>סימולציית פרבולות — בקרוב</span>
+  </div>
 </div>
 </div>
 
 <script>
-const W=680,H=200;
-let eqs=[
-  {raw:'2x=8',lx:2,ln:0,rx:0,rn:8,done:false},
-  {raw:'x+3=10',lx:1,ln:3,rx:0,rn:10,done:false},
-  {raw:'3x-1=8',lx:3,ln:-1,rx:0,rn:8,done:false},
-  {raw:'4x+2=14',lx:4,ln:2,rx:0,rn:14,done:false},
-];
-let curEqIdx=0;
-let state={lx:0,ln:0,rx:0,rn:0};
-let op='add',useX=false;
-let history=[];
-let step=1; // 1=transfer terms, 2=divide by coeff
-let animating=false;
-let pendingLeft=null; // after animating half-apply, store the "unbalanced" state
-let dpr=1;
-
-const canvas=document.getElementById('scaleCanvas');
+const canvas=document.getElementById('sc');
 const ctx=canvas.getContext('2d');
+let dpr=1,cw=400,ch=185;
 
-function resizeCanvas(){
+function rz(){
   dpr=window.devicePixelRatio||1;
-  const w=canvas.parentElement.clientWidth||400;
-  canvas.width=w*dpr;
-  canvas.height=H*dpr;
+  cw=Math.max(200,canvas.parentElement.clientWidth-20);
+  canvas.width=cw*dpr;canvas.height=ch*dpr;
   ctx.scale(dpr,dpr);
-  canvas._w=w;
 }
 
-function switchTab(t){
-  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.textContent===({sim:'סימולציה',eqs:'רשימת תרגילים'}[t])));
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.getElementById('panel-'+t).classList.add('active');
-  if(t==='eqs') renderEqList();
+// ---- Display formatter — keeps original form ----
+function fmtDisplay(xc,nc){
+  // show fractions nicely if xc is simple fraction
+  let xPart='',nPart='';
+  const xr=Math.round(xc*1e6)/1e6;
+  const nr=Math.round(nc*1e6)/1e6;
+  if(xr!==0){
+    if(xr===1)xPart='x';
+    else if(xr===-1)xPart='-x';
+    else{
+      // try to show as fraction
+      const frac=toFrac(xr);
+      xPart=(frac||xr)+'x';
+    }
+  }
+  if(nr!==0){
+    const nFrac=toFrac(nr);
+    const nStr=nFrac||nr;
+    if(nr>0&&xr!==0)nPart='+'+nStr;
+    else nPart=''+nStr;
+  }
+  if(!xPart&&!nPart)return'0';
+  return xPart+nPart;
 }
 
-function parseEq(s){
-  s=s.replace(/\s/g,'').toLowerCase();
-  const m=s.match(/^(-?\d*\.?\d*)x([+-]\d+\.?\d*)?=(-?\d+\.?\d*)$|^(-?\d+\.?\d*)=(-?\d*\.?\d*)x([+-]\d+\.?\d*)?$|^(-?\d*\.?\d*)x=(-?\d+\.?\d*)$/);
-  if(!m) return null;
-  let lx,ln,rn;
-  if(m[1]!==undefined&&m[3]!==undefined){
-    lx=m[1]===''||m[1]==='-'?(m[1]==='-'?-1:1):parseFloat(m[1]);
-    if(isNaN(lx)) lx=m[1]==='-'?-1:1;
-    ln=m[2]?parseFloat(m[2]):0;
-    rn=parseFloat(m[3]);
-  } else if(m[7]!==undefined){
-    const c=m[7];
-    lx=c===''||c==='-'?(c==='-'?-1:1):parseFloat(c);
-    if(isNaN(lx)) lx=c==='-'?-1:1;
-    ln=0;
-    rn=parseFloat(m[8]);
-  } else return null;
-  if(isNaN(lx)||isNaN(ln)||isNaN(rn)) return null;
-  return {lx,ln:ln,rx:0,rn};
+function toFrac(v){
+  // try denominators up to 12
+  for(let d=2;d<=12;d++){
+    const n=Math.round(v*d);
+    if(Math.abs(n/d-v)<1e-8){
+      if(Math.abs(n)%d!==0)return n+'/'+d;
+    }
+  }
+  return null;
 }
 
-function addEquation(){
-  const inp=document.getElementById('add-inp');
-  const err=document.getElementById('parse-err');
-  const p=parseEq(inp.value.trim());
-  if(!p){err.textContent='פורמט לא תקין. נסה: 2x+3=9';return;}
-  err.textContent='';
-  eqs.push({raw:inp.value.trim(),...p,done:false});
-  inp.value='';
+function fmtEq(s){return fmtDisplay(s.lx,s.ln)+' = '+fmtDisplay(s.rx,s.rn);}
+
+// ---- Parser: stores original tokens, does NOT expand ----
+// We store the equation exactly as typed for display.
+// For computation, we DO expand internally.
+function expandSide(t){
+  // expand parentheses: A(Bx+C) -> ABx+AC
+  t=t.replace(/([+-]?\d*\.?\d*)\(([^)]+)\)/g,(m,a,inner)=>{
+    const A=a===''||a==='+'?1:a==='-'?-1:parseFloat(a)||1;
+    const im=inner.match(/^([+-]?\d*\.?\d*)x([+-]\d+\.?\d*)?$/);
+    if(!im)return m;
+    const ix=im[1]===''||im[1]==='+'?1:im[1]==='-'?-1:parseFloat(im[1])||1;
+    const ib=im[2]?parseFloat(im[2]):0;
+    return (A*ix===1?'':A*ix===-1?'-':(A*ix))+'x'+(A*ib>=0&&ix?'+'+A*ib:A*ib);
+  });
+  // handle x/D -> (1/D)x
+  t=t.replace(/([+-]?\d*\.?\d*)x\/(\d+\.?\d*)/g,(m,n,d)=>{
+    const N=n===''||n==='+'?1:n==='-'?-1:parseFloat(n)||1;
+    const D=parseFloat(d);
+    const v=N/D;
+    return(v===1?'':v===-1?'-':v)+'x';
+  });
+  let xc=0,nc=0;
+  const xterms=t.match(/[+-]?\d*\.?\d*x/g)||[];
+  let rem=t;
+  xterms.forEach(m=>{
+    rem=rem.replace(m,'');
+    const c=m.replace('x','');
+    if(c===''||c==='+')xc+=1;
+    else if(c==='-')xc-=1;
+    else xc+=parseFloat(c)||0;
+  });
+  if(rem!==''&&rem!=='+'){const v=parseFloat(rem);if(!isNaN(v))nc=v;}
+  return{xc:Math.round(xc*1e6)/1e6,nc:Math.round(nc*1e6)/1e6};
+}
+
+function parseEqStr(raw){
+  const s=raw.replace(/\s/g,'');
+  const parts=s.split('=');
+  if(parts.length!==2)return null;
+  const L=expandSide(parts[0]),R=expandSide(parts[1]);
+  return{lx:L.xc,ln:L.nc,rx:R.xc,rn:R.nc,origLeft:parts[0],origRight:parts[1]};
+}
+
+// ---- Data ----
+const defaultRaws=['2x=8','x+3=10','3x-1=8','4x+2=14','2(x+1)=10','x/2+1=5'];
+let eqs=defaultRaws.map(raw=>{
+  const p=parseEqStr(raw);
+  return{raw,...p,done:false,expanded:false};
+});
+let ci=0;
+let st={lx:0,ln:0,rx:0,rn:0};
+let displayRaw={left:'',right:''};
+let op='add',xMode=null;
+let log=[];
+let busy=false;
+
+function r3(v){return Math.round(v*1000)/1000;}
+
+// ---- Scale ----
+function getTilt(s){
+  const dlx=s.lx-s.rx;
+  if(dlx===0)return 0;
+  const sol=(s.rn-s.ln)/dlx;
+  const lv=s.lx*sol+s.ln,rv=s.rx*sol+s.rn;
+  return Math.max(-16,Math.min(16,(lv-rv)*1.6));
+}
+
+function drawWeightShape(cx,by,label,fc,tc,pw,wh){
+  ctx.fillStyle=fc;ctx.strokeStyle=tc+'66';ctx.lineWidth=0.7;
+  ctx.beginPath();ctx.roundRect(cx-pw/2,by,pw,wh,4);ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.roundRect(cx-5,by-5,10,7,3);ctx.fill();ctx.stroke();
+  ctx.fillStyle=tc;
+  const fs=Math.min(13,Math.max(9,pw/(Math.max(label.length,1))*1.5));
+  ctx.font=`500 ${fs}px var(--font-sans,sans-serif)`;
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(label,cx,by+wh/2);
+}
+
+function drawScale(s,exL,exR){
+  rz();
+  ctx.clearRect(0,0,cw,ch);
+  const dk=window.matchMedia('(prefers-color-scheme:dark)').matches;
+  const C={
+    beam:dk?'rgba(255,255,255,.22)':'rgba(0,0,0,.22)',
+    piv:dk?'rgba(255,255,255,.45)':'rgba(0,0,0,.45)',
+    lPan:dk?'#1a3a5c':'#E6F1FB',lTxt:dk?'#85B7EB':'#0C447C',
+    rPan:dk?'#3d2800':'#FAEEDA',rTxt:dk?'#FAC775':'#633806',
+    sPan:dk?'#1a3520':'#EAF3DE',sTxt:dk?'#9FE1CB':'#27500A',
+    addW:'#C0DD97',addWt:'#27500A',
+    subW:'#F7C1C1',subWt:'#791F1F',
+  };
+  const pivX=cw/2,pivY=76;
+  const arm=Math.min(cw*.38,165);
+  const tilt=getTilt(s);
+  const rad=tilt*Math.PI/180;
+  const lEx=pivX-arm*Math.cos(rad),lEy=pivY+arm*Math.sin(rad);
+  const rEx=pivX+arm*Math.cos(rad),rEy=pivY-arm*Math.sin(rad);
+  const chain=20,panW=Math.min(94,arm*.78),panH=34;
+
+  ctx.fillStyle=C.beam;
+  ctx.beginPath();ctx.roundRect(pivX-2.5,pivY,5,56,2);ctx.fill();
+  ctx.beginPath();ctx.moveTo(pivX-24,pivY+56);ctx.lineTo(pivX-44,pivY+65);ctx.lineTo(pivX+44,pivY+65);ctx.lineTo(pivX+24,pivY+56);ctx.closePath();ctx.fill();
+  ctx.beginPath();ctx.roundRect(pivX-52,pivY+65,104,7,3);ctx.fill();
+  ctx.save();ctx.translate(pivX,pivY);ctx.rotate(-rad);
+  ctx.fillStyle=C.beam;ctx.beginPath();ctx.roundRect(-arm,-2.5,arm*2,5,2.5);ctx.fill();
+  ctx.restore();
+  ctx.fillStyle=C.piv;ctx.beginPath();ctx.arc(pivX,pivY,5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=dk?'#111':'#fff';ctx.beginPath();ctx.arc(pivX,pivY,2.5,0,Math.PI*2);ctx.fill();
+
+  function drawPan(ex,ey,xc,nc,side,extra){
+    ctx.strokeStyle=C.beam;ctx.lineWidth=1;ctx.setLineDash([2,3]);
+    ctx.beginPath();ctx.moveTo(ex,ey);ctx.lineTo(ex,ey+chain);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.strokeStyle=C.beam;ctx.lineWidth=0.5;
+    ctx.beginPath();ctx.moveTo(ex-panW/2,ey+chain);ctx.lineTo(ex+panW/2,ey+chain);ctx.stroke();
+    const py=ey+chain;
+    const solved=isSolved();
+    const fc=solved?C.sPan:side==='l'?C.lPan:C.rPan;
+    const tc=solved?C.sTxt:side==='l'?C.lTxt:C.rTxt;
+    const lbl=fmtDisplay(xc,nc);
+    drawWeightShape(ex,py,lbl,fc,tc,panW,panH);
+    if(extra&&extra.alpha>0){
+      const ewH=22,ewW=Math.min(58,panW*.58);
+      const ewY=py-ewH-10;
+      const fc2=extra.isAdd?C.addW:C.subW;
+      const tc2=extra.isAdd?C.addWt:C.subWt;
+      ctx.globalAlpha=extra.alpha;
+      drawWeightShape(ex,ewY,extra.label,fc2,tc2,ewW,ewH);
+      ctx.globalAlpha=1;
+    }
+    ctx.fillStyle=dk?'rgba(255,255,255,.25)':'rgba(0,0,0,.25)';
+    ctx.font=`10px var(--font-sans,sans-serif)`;
+    ctx.textAlign='center';ctx.textBaseline='alphabetic';
+    ctx.fillText(side==='l'?'צד שמאל':'צד ימין',ex,ey+chain+panH+12);
+  }
+  drawPan(lEx,lEy,s.lx,s.ln,'l',exL);
+  drawPan(rEx,rEy,s.rx,s.rn,'r',exR);
+}
+
+// ---- Animation ----
+function animateApply(beforeSt,afterSt,effOp,xc,nc,lbl,onDone){
+  busy=true;
+  document.getElementById('exec-btn').disabled=true;
+  const bar=document.getElementById('anim-bar');
+  const midSt={
+    lx:r3(effOp==='add'?beforeSt.lx+xc:effOp==='sub'?beforeSt.lx-xc:effOp==='mul'?beforeSt.lx*nc:beforeSt.lx/nc),
+    ln:r3(effOp==='add'?beforeSt.ln+nc:effOp==='sub'?beforeSt.ln-nc:effOp==='mul'?beforeSt.ln*nc:beforeSt.ln/nc),
+    rx:beforeSt.rx,rn:beforeSt.rn
+  };
+  const isAdd=(effOp==='add')||(effOp==='mul'&&nc>0)||(effOp==='div'&&nc>0);
+  const exInfo={label:lbl,isAdd};
+  const verb=effOp==='add'?'מוסיפים':effOp==='sub'?'מחסירים':effOp==='mul'?'מכפילים':'מחלקים';
+  bar.textContent=`${verb} ${lbl} לצד שמאל — המאזניים הטו`;
+  let a=0;
+  const t1=setInterval(()=>{a=Math.min(1,a+0.1);drawScale(midSt,{...exInfo,alpha:a},null);if(a>=1)clearInterval(t1);},40);
+  setTimeout(()=>{
+    clearInterval(t1);
+    bar.textContent=`${verb} ${lbl} גם לצד ימין — המאזניים מתאזנים`;
+    let a2=0;
+    const t2=setInterval(()=>{a2=Math.min(1,a2+0.1);drawScale(midSt,null,{...exInfo,alpha:a2});if(a2>=1)clearInterval(t2);},40);
+    setTimeout(()=>{clearInterval(t2);bar.textContent='';drawScale(afterSt);onDone();},900);
+  },900);
+}
+
+// ---- Controls ----
+function selOp(o){
+  op=o;xMode=null;
+  document.querySelectorAll('.op-btn').forEach(b=>b.classList.remove('sel'));
+  document.getElementById('op-'+o).classList.add('sel');
+  document.getElementById('xadd-btn').classList.remove('on');
+  document.getElementById('xsub-btn').classList.remove('on');
+  updPreview();
+}
+function selXOp(m){
+  xMode=xMode===m?null:m;
+  if(xMode){op='add';document.querySelectorAll('.op-btn').forEach(b=>b.classList.remove('sel'));}
+  document.getElementById('xadd-btn').classList.toggle('on',xMode==='add');
+  document.getElementById('xsub-btn').classList.toggle('on',xMode==='sub');
+  updPreview();
+}
+function updPreview(){
+  const num=parseFloat(document.getElementById('num-inp').value)||0;
+  const coef=parseFloat(document.getElementById('x-coef').value)||1;
+  const sym={add:'+',sub:'−',mul:'·',div:'÷'}[op];
+  let txt;
+  if(xMode==='add')txt=coef===1?'+x':'+'+coef+'x';
+  else if(xMode==='sub')txt=coef===1?'−x':'−'+coef+'x';
+  else txt=sym+num;
+  document.getElementById('preview-box').textContent=txt;
+}
+
+// ---- Apply ----
+function isSolved(){return st.lx===1&&Math.abs(st.ln)<1e-9&&Math.abs(st.rx)<1e-9;}
+
+function doApply(){
+  if(busy)return;
+  const err=document.getElementById('err-msg');err.textContent='';
+  const num=parseFloat(document.getElementById('num-inp').value);
+  const coef=parseFloat(document.getElementById('x-coef').value)||1;
+  if(isNaN(num)&&!xMode){err.textContent='הכנס מספר תקין';return;}
+  let xc=0,nc=0,effOp=op;
+  if(xMode==='add'){xc=coef;nc=0;effOp='add';}
+  else if(xMode==='sub'){xc=coef;nc=0;effOp='sub';}
+  else{nc=num;}
+  if((effOp==='div'||effOp==='mul')&&nc===0){err.textContent='ערך לא תקין';return;}
+
+  const sym={add:'+',sub:'−',mul:'·',div:'÷'}[effOp];
+  let lbl;
+  if(xMode==='add')lbl=coef===1?'+x':'+'+coef+'x';
+  else if(xMode==='sub')lbl=coef===1?'−x':'−'+coef+'x';
+  else lbl=sym+r3(nc);
+
+  function applyS(s){
+    return{
+      lx:r3(effOp==='add'?s.lx+xc:effOp==='sub'?s.lx-xc:effOp==='mul'?s.lx*nc:s.lx/nc),
+      ln:r3(effOp==='add'?s.ln+nc:effOp==='sub'?s.ln-nc:effOp==='mul'?s.ln*nc:s.ln/nc),
+      rx:r3(effOp==='add'?s.rx+xc:effOp==='sub'?s.rx-xc:effOp==='mul'?s.rx*nc:s.rx/nc),
+      rn:r3(effOp==='add'?s.rn+nc:effOp==='sub'?s.rn-nc:effOp==='mul'?s.rn*nc:s.rn/nc),
+    };
+  }
+  const afterSt=applyS(st);
+  animateApply({...st},afterSt,effOp,xc,nc,lbl,()=>{
+    st=afterSt;
+    log.push({op:lbl,eq:fmtEq(st)});
+    xMode=null;
+    document.getElementById('xadd-btn').classList.remove('on');
+    document.getElementById('xsub-btn').classList.remove('on');
+    busy=false;
+    document.getElementById('exec-btn').disabled=false;
+    if(isSolved())eqs[ci].done=true;
+    render();
+  });
+}
+
+// ---- Render ----
+function renderProgress(){
+  const total=eqs.length;
+  const done=eqs.filter(e=>e.done).length;
+  const pct=total?Math.round(done/total*100):0;
+  document.getElementById('prog-label').textContent=`פתרת ${done} תרגילים מתוך ${total}`;
+  document.getElementById('prog-count').textContent=pct+'%';
+  document.getElementById('prog-fill').style.width=pct+'%';
+  const dots=document.getElementById('prog-dots');
+  dots.innerHTML=eqs.map((e,i)=>`<div class="prog-dot ${i===ci?'curr':e.done?'done':''}" title="${e.raw}" onclick="loadIdx(${i})"></div>`).join('');
+}
+
+function render(){
+  drawScale(st);
+  const disp=document.getElementById('eq-disp');
+  if(isSolved()){
+    const sol=r3(st.rn);
+    disp.innerHTML=`<span style="color:#0C447C;background:#E6F1FB;border-radius:6px;padding:2px 14px">x = ${sol}</span>`;
+  } else disp.textContent=fmtEq(st);
+
+  // show original raw equation under current
+  const orig=document.getElementById('eq-orig');
+  const e=eqs[ci];
+  if(e&&(e.raw.includes('(')||e.raw.includes('/'))){
+    orig.textContent='משוואה מקורית: '+e.raw;
+  } else orig.textContent='';
+
+  const guide=document.getElementById('eq-guide');
+  if(!isSolved()){
+    if(st.ln!==0||st.rx!==0)guide.textContent='יש להביא למבנה: ax = b';
+    else if(Math.abs(st.lx-1)>1e-9)guide.textContent='חלק במקדם של x לבידוד הנעלם';
+    else guide.textContent='';
+  } else guide.textContent='';
+
+  const la=document.getElementById('log-area');
+  if(!log.length)la.innerHTML='<div style="font-size:12px;color:var(--color-text-tertiary)">טרם בוצעו פעולות</div>';
+  else la.innerHTML=log.map(e=>`<div class="log-entry"><span class="log-op">${e.op}</span><span class="log-eq">${e.eq}</span></div>`).join('');
+  // scroll log to bottom
+  const lc=document.querySelector('.log-card');
+  if(lc)lc.scrollTop=lc.scrollHeight;
+
+  const banner=document.getElementById('solved-banner');
+  if(isSolved()){banner.textContent=`המשוואה נפתרה! x = ${r3(st.rn)}`;banner.classList.add('show');}
+  else banner.classList.remove('show');
+
+  renderProgress();
   renderEqList();
-}
-
-function clearAll(){
-  eqs=[]; renderEqList();
+  updPreview();
 }
 
 function renderEqList(){
   const ul=document.getElementById('eq-list');
-  ul.innerHTML='';
-  eqs.forEach((e,i)=>{
-    const row=document.createElement('div');
-    row.className='eq-row'+(i===curEqIdx?' current':e.done?' done':'');
-    const badge=i===curEqIdx?'badge-curr':e.done?'badge-done':'badge-todo';
-    const label=i===curEqIdx?'נוכחי':e.done?'בוצע':'ממתין';
-    row.innerHTML=`<span class="eq-num">${i+1}</span><span class="eq-text">${e.raw}</span><span class="eq-badge ${badge}">${label}</span>
-    <button class="icon-btn" onclick="loadEqIdx(${i})">טען</button>
-    <button class="icon-btn" onclick="removeEq(${i})">✕</button>`;
-    ul.appendChild(row);
-  });
+  if(!ul)return;
+  ul.innerHTML=eqs.map((e,i)=>`<div class="eq-row2${i===ci?' curr':e.done?' done2':''}" onclick="loadIdx(${i});hubTabByName('eq')">
+    <span class="eq-num2">${i+1}</span>
+    <span class="eq-txt2">${e.raw}</span>
+    <span class="dot-b ${i===ci?'dot-c':e.done?'dot-d':'dot-t'}"></span>
+  </div>`).join('');
 }
 
-function removeEq(i){eqs.splice(i,1);if(curEqIdx>=eqs.length)curEqIdx=Math.max(0,eqs.length-1);renderEqList();}
+function hubTabByName(t){
+  document.querySelectorAll('.hub-tab').forEach((b,i)=>b.classList.toggle('active',['eq','exercises','par'][i]===t));
+  document.querySelectorAll('.sim-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('hub-'+t).classList.add('active');
+  if(t==='eq')setTimeout(()=>{rz();drawScale(st);},30);
+}
 
-function loadEqIdx(i){
-  if(eqs.length===0) return;
-  curEqIdx=i;
-  const e=eqs[i];
-  state={lx:e.lx,ln:e.ln,rx:e.rx||0,rn:e.rn};
-  history=[];step=1;useX=false;pendingLeft=null;animating=false;
-  document.getElementById('x-tog').classList.remove('on');
-  document.getElementById('solved-bar').classList.remove('show');
+function loadIdx(i){
+  if(!eqs[i])return;
+  ci=i;const e=eqs[i];
+  st={lx:e.lx,ln:e.ln,rx:e.rx||0,rn:e.rn};
+  log=[{op:'התחלה',eq:fmtEq(st)}];
+  xMode=null;op='add';busy=false;
+  document.getElementById('exec-btn').disabled=false;
   document.getElementById('err-msg').textContent='';
-  document.getElementById('anim-notice').classList.remove('show');
-  determineStep();
-  renderAll();
+  document.getElementById('anim-bar').textContent='';
+  document.getElementById('solved-banner').classList.remove('show');
+  document.querySelectorAll('.op-btn').forEach(b=>b.classList.remove('sel'));
+  document.getElementById('op-add').classList.add('sel');
+  document.getElementById('xadd-btn').classList.remove('on');
+  document.getElementById('xsub-btn').classList.remove('on');
+  render();
 }
 
-function loadCurrentEq(){loadEqIdx(curEqIdx);}
+function resetCurr(){loadIdx(ci);}
+function nextEq(){loadIdx((ci+1)%eqs.length);}
+function resetAll(){eqs.forEach(e=>e.done=false);loadIdx(0);}
 
-function nextEq(){
-  if(eqs.length===0) return;
-  curEqIdx=(curEqIdx+1)%eqs.length;
-  loadEqIdx(curEqIdx);
-}
-
-function resetCurrent(){loadCurrentEq();}
-
-function determineStep(){
-  const hasNonXOnLeft=state.ln!==0;
-  const hasXOnRight=state.rx!==0;
-  if(hasNonXOnLeft||hasXOnRight){
-    step=1;
-  } else if(state.lx!==1&&state.lx!==0){
-    step=2;
-  } else {
-    step=3;
-  }
-}
-
-function setOp(o){
-  op=o;
-  ['add','sub','mul','div'].forEach(x=>document.getElementById('op-'+x).classList.toggle('sel',x===o));
-}
-
-function toggleX(){
-  useX=!useX;
-  document.getElementById('x-tog').classList.toggle('on',useX);
-}
-
-function fmtSide(xc,n){
-  let p=[];
-  if(xc!==0){
-    if(xc===1) p.push('x');
-    else if(xc===-1) p.push('-x');
-    else p.push(xc+'x');
-  }
-  if(n!==0){
-    if(n>0&&xc!==0) p.push('+'+n);
-    else p.push(''+n);
-  }
-  if(p.length===0) return '0';
-  return p.join(' ');
-}
-
-function eqStr(s){return fmtSide(s.lx,s.ln)+' = '+fmtSide(s.rx,s.rn);}
-
-function getSolution(){
-  const dlx=state.lx-state.rx;
-  const drn=state.rn-state.ln;
-  if(dlx===0) return null;
-  if(drn%dlx===0) return drn/dlx;
-  return drn/dlx;
-}
-
-function isSolved(){return state.lx===1&&state.ln===0&&state.rx===0;}
-
-function applyToState(s,o,xc,nc){
-  let {lx,ln,rx,rn}=s;
-  if(o==='add'){lx+=xc;ln+=nc;rx+=xc;rn+=nc;}
-  else if(o==='sub'){lx-=xc;ln-=nc;rx-=xc;rn-=nc;}
-  else if(o==='mul'){lx*=nc;ln*=nc;rx*=nc;rn*=nc;}
-  else if(o==='div'){lx/=nc;ln/=nc;rx/=nc;rn/=nc;}
-  return{lx,ln,rx,rn};
-}
-
-function startApply(){
-  if(animating) return;
-  const err=document.getElementById('err-msg');
+function addEq(){
+  const inp=document.getElementById('add-inp');
+  const err=document.getElementById('add-err');
+  const raw=inp.value.trim();
+  if(!raw)return;
+  const p=parseEqStr(raw);
+  if(!p){err.textContent='פורמט לא תקין. דוגמה: 2x+3=9';return;}
   err.textContent='';
-  const raw=parseFloat(document.getElementById('num-inp').value);
-  const numVal=isNaN(raw)?0:raw;
-  const xc=useX?numVal:0;
-  const nc=useX?0:numVal;
-
-  if(op==='div'&&nc===0&&!useX){err.textContent='לא ניתן לחלק באפס';return;}
-  if(op==='mul'&&useX){err.textContent='כפל ב-x לא נתמך';return;}
-  if(op==='div'&&useX){err.textContent='חילוק ב-x לא נתמך';return;}
-  if(op==='mul'&&nc===0){err.textContent='כפל באפס לא מאפשר פתרון';return;}
-
-  const opSym={add:'+',sub:'−',mul:'×',div:'÷'}[op];
-  const opLabel=useX?`${opSym} ${numVal}x`:`${opSym} ${numVal}`;
-
-  animating=true;
-  document.getElementById('apply-btn').disabled=true;
-
-  // Phase 1: apply only to left side
-  const halfState={lx:state.lx,ln:state.ln,rx:state.rx,rn:state.rn};
-  if(op==='add'){halfState.lx+=xc;halfState.ln+=nc;}
-  else if(op==='sub'){halfState.lx-=xc;halfState.ln-=nc;}
-  else if(op==='mul'){halfState.lx*=nc;halfState.ln*=nc;}
-  else if(op==='div'){halfState.lx/=nc;halfState.ln/=nc;}
-
-  const notice=document.getElementById('anim-notice');
-  const verb=op==='add'?'הוספנו':op==='sub'?'הורדנו':op==='mul'?'הכפלנו':'חילקנו';
-  notice.textContent=`${verb} ${opLabel} לצד שמאל — המאזניים הטו! עכשיו ${op==='add'?'מוסיפים':op==='sub'?'מורידים':op==='mul'?'מכפילים':'מחלקים'} גם לצד ימין...`;
-  notice.classList.add('show');
-
-  drawScale(halfState);
-
-  setTimeout(()=>{
-    // Phase 2: apply to right side too
-    const fullState=applyToState(state,op,xc,nc);
-    state={...fullState};
-    history.push(opLabel);
-    determineStep();
-    notice.classList.remove('show');
-    animating=false;
-    document.getElementById('apply-btn').disabled=false;
-    useX=false;
-    document.getElementById('x-tog').classList.remove('on');
-    if(isSolved()){
-      eqs[curEqIdx].done=true;
-      document.getElementById('x-val').textContent=Math.round(state.rn*100)/100;
-      document.getElementById('solved-bar').classList.add('show');
-    }
-    renderAll();
-  },1200);
-
-  // also show immediate eq update
-  renderAll(halfState);
+  eqs.push({raw,...p,done:false});
+  inp.value='';
+  renderEqList();
+  renderProgress();
 }
 
-function getTilt(s){
-  const sol=getSolution();
-  if(sol===null) return 0;
-  const lv=s.lx*sol+s.ln;
-  const rv=s.rx*sol+s.rn;
-  const diff=lv-rv;
-  return Math.max(-14,Math.min(14,diff*2));
+function hubTab(t,btn){
+  document.querySelectorAll('.hub-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.sim-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('hub-'+t).classList.add('active');
+  if(t==='eq')setTimeout(()=>{rz();drawScale(st);},30);
+  if(t==='exercises')renderEqList();
 }
 
-function drawScale(s){
-  const cw=canvas._w||400;
-  ctx.clearRect(0,0,cw,H);
-  const cx=cw/2;
-  const pivotY=100;
-  const tilt=getTilt(s);
-  const rad=tilt*Math.PI/180;
-  const armLen=cw*0.38;
-  const panW=Math.min(110,cw*0.25);
-  const panH=38;
-  const chainLen=28;
-
-  const isDark=window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const txtColor=isDark?'#c2c0b6':'#2C2C2A';
-  const borderColor=isDark?'rgba(255,255,255,0.25)':'rgba(0,0,0,0.25)';
-  const fillColor=isDark?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.04)';
-  const beamColor=isDark?'rgba(255,255,255,0.3)':'rgba(0,0,0,0.25)';
-  const pivotColor=isDark?'rgba(255,255,255,0.5)':'rgba(0,0,0,0.45)';
-
-  // pillar
-  ctx.fillStyle=beamColor;
-  ctx.beginPath();ctx.roundRect(cx-3,pivotY,6,75,2);ctx.fill();
-
-  // base
-  ctx.fillStyle=fillColor;ctx.strokeStyle=borderColor;ctx.lineWidth=0.5;
-  ctx.beginPath();
-  ctx.moveTo(cx-30,pivotY+75);ctx.lineTo(cx-55,pivotY+84);ctx.lineTo(cx+55,pivotY+84);ctx.lineTo(cx+30,pivotY+75);ctx.closePath();
-  ctx.fill();ctx.stroke();
-  ctx.beginPath();ctx.roundRect(cx-65,pivotY+84,130,8,3);ctx.fill();ctx.stroke();
-
-  // beam
-  const lEnd={x:cx-armLen*Math.cos(rad),y:pivotY+armLen*Math.sin(rad)};
-  const rEnd={x:cx+armLen*Math.cos(rad),y:pivotY-armLen*Math.sin(rad)};
-  ctx.save();ctx.translate(cx,pivotY);ctx.rotate(-rad);
-  ctx.fillStyle=fillColor;ctx.strokeStyle=beamColor;ctx.lineWidth=1;
-  ctx.beginPath();ctx.roundRect(-armLen,-3,armLen*2,7,3);ctx.fill();ctx.stroke();
-  ctx.restore();
-
-  // pivot circle
-  ctx.fillStyle=pivotColor;
-  ctx.beginPath();ctx.arc(cx,pivotY,6,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle=isDark?'#1a1a1a':'#fff';
-  ctx.beginPath();ctx.arc(cx,pivotY,3,0,Math.PI*2);ctx.fill();
-
-  function drawPan(ex,ey,text,side){
-    // chain
-    ctx.strokeStyle=borderColor;ctx.lineWidth=1.2;ctx.setLineDash([3,3]);
-    ctx.beginPath();ctx.moveTo(ex,ey);ctx.lineTo(ex,ey+chainLen);ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.strokeStyle=borderColor;ctx.lineWidth=0.5;
-    ctx.beginPath();ctx.moveTo(ex-panW/2,ey+chainLen);ctx.lineTo(ex+panW/2,ey+chainLen);ctx.stroke();
-
-    // pan box
-    const px=ex-panW/2, py=ey+chainLen;
-    const isSolvedSide=isSolved()&&(side==='left'||side==='right');
-    if(isSolvedSide){
-      ctx.fillStyle='#EAF3DE';ctx.strokeStyle='#639922';
-    } else {
-      ctx.fillStyle=side==='left'?'#E6F1FB':'#FAEEDA';
-      ctx.strokeStyle=side==='left'?'#378ADD':'#BA7517';
-    }
-    ctx.lineWidth=0.8;
-    ctx.beginPath();ctx.roundRect(px,py,panW,panH,6);ctx.fill();ctx.stroke();
-
-    // text
-    ctx.fillStyle=isSolvedSide?'#27500A':side==='left'?'#0C447C':'#633806';
-    ctx.font=`500 14px var(--font-sans, sans-serif)`;
-    ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillText(text,ex,py+panH/2);
-  }
-
-  drawPan(lEnd.x,lEnd.y,fmtSide(s.lx,s.ln),'left');
-  drawPan(rEnd.x,rEnd.y,fmtSide(s.rx,s.rn),'right');
-
-  // side labels
-  ctx.fillStyle=isDark?'rgba(255,255,255,0.35)':'rgba(0,0,0,0.3)';
-  ctx.font=`11px var(--font-sans, sans-serif)`;
-  ctx.textAlign='center';ctx.textBaseline='alphabetic';
-  ctx.fillText('צד שמאל',lEnd.x,pivotY+75+chainLen+panH+14);
-  ctx.fillText('צד ימין',rEnd.x,pivotY+75+chainLen+panH+14);
-}
-
-function renderSteps(){
-  const ind=document.getElementById('step-ind');
-  ind.innerHTML='';
-  const steps=['העברת אגפים','חלוקה במקדם','פתרון'];
-  steps.forEach((s,i)=>{
-    const d=document.createElement('div');
-    const num=i+1;
-    const isDone=(num<step)||(isSolved()&&num===3);
-    const isActive=num===step&&!isSolved();
-    d.className='step-dot'+(isActive?' active':isDone?' done':'');
-    d.title=s;
-    d.textContent=num;
-    d.style.title=s;
-    ind.appendChild(d);
-    if(i<2){
-      const sep=document.createElement('div');
-      sep.style.cssText='height:1px;flex:1;background:var(--color-border-tertiary);align-self:center;margin:0 4px';
-      ind.appendChild(sep);
-    }
-  });
-  ind.style.display='flex';ind.style.alignItems='center';
-}
-
-function renderHint(){
-  const h=document.getElementById('hint-box');
-  const lbl=document.getElementById('ctrl-label');
-  if(isSolved()){
-    h.textContent='המשוואה נפתרה! ניתן לעבור לתרגיל הבא.';
-    return;
-  }
-  if(step===1){
-    const hasLN=state.ln!==0;
-    const hasRX=state.rx!==0;
-    if(hasLN&&state.ln>0) h.textContent=`שלב 1: העבר אגפים — חסר ${state.ln} משני הצדדים כדי להוציא מספרים לצד ימין.`;
-    else if(hasLN&&state.ln<0) h.textContent=`שלב 1: העבר אגפים — הוסף ${Math.abs(state.ln)} לשני הצדדים.`;
-    else if(hasRX) h.textContent=`שלב 1: העבר אגפים — חסר ${fmtSide(state.rx,0)}x משני הצדדים.`;
-    else h.textContent='שלב 1: העברת אגפים — אין מה להעביר, המשך לשלב 2.';
-    lbl.textContent='בחר פעולה (שלב 1 — העברת אגפים):';
-  } else if(step===2){
-    h.textContent=`שלב 2: חלוקה במקדם — חלק את שני הצדדים ב-${state.lx} כדי לבודד את x.`;
-    lbl.textContent='בחר פעולה (שלב 2 — חלוקה במקדם):';
-    document.getElementById('op-add').disabled=true;
-    document.getElementById('op-sub').disabled=true;
-    document.getElementById('op-mul').disabled=true;
-    setOp('div');
-  }
-  if(step===1){
-    ['op-add','op-sub','op-mul','op-div'].forEach(id=>document.getElementById(id).disabled=false);
-  }
-}
-
-function renderEq(){
-  const eq=document.getElementById('eq-big');
-  if(isSolved()){
-    eq.innerHTML=`<span style="color:#185FA5;background:#E6F1FB;border-radius:6px;padding:2px 14px">x = ${Math.round(state.rn*100)/100}</span>`;
-  } else {
-    eq.textContent=eqStr(state);
-  }
-}
-
-function renderHistory(){
-  const row=document.getElementById('hist-row');
-  row.innerHTML=history.map(h=>`<span class="chip">${h}</span>`).join('');
-}
-
-function renderAll(overrideState){
-  const s=overrideState||state;
-  resizeCanvas();
-  drawScale(s);
-  renderEq();
-  renderSteps();
-  renderHint();
-  renderHistory();
-}
-
-window.addEventListener('resize',()=>{if(!animating) renderAll();});
-
-// init
-if(eqs.length>0) loadEqIdx(0);
+window.addEventListener('resize',()=>{if(!busy){rz();drawScale(st);}});
+loadIdx(0);
 </script>
