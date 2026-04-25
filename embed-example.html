@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>דוגמת הטמעה — סביבת למידה</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #f5f4f0; color: #2c2c2a; }
+
+    .lms {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 16px;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* Simulated LMS activity card */
+    .activity-card {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .activity-header {
+      background: #185FA5;
+      color: #fff;
+      padding: 12px 16px;
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    .instructions {
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #555;
+      border-bottom: 1px solid #eee;
+    }
+
+    /* The iframe — this is where the simulator lives */
+    #cube-sim {
+      width: 100%;
+      height: 520px;
+      border: none;
+      display: block;
+    }
+
+    /* Teacher / LMS control panel */
+    .control-panel {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .control-panel h3 {
+      font-size: 14px;
+      font-weight: 500;
+      color: #185FA5;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .section { margin-bottom: 16px; }
+    .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: #888; margin-bottom: 6px; }
+
+    button {
+      display: block;
+      width: 100%;
+      padding: 7px 12px;
+      margin-bottom: 5px;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+      background: #f9f8f5;
+      font-size: 12px;
+      cursor: pointer;
+      text-align: right;
+      font-family: inherit;
+    }
+    button:hover { background: #eef; border-color: #378ADD; }
+    button.primary { background: #185FA5; color: #fff; border-color: #185FA5; }
+    button.primary:hover { background: #0C447C; }
+
+    .state-output {
+      background: #f5f4f0;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 8px;
+      font-size: 11px;
+      font-family: monospace;
+      min-height: 60px;
+      white-space: pre-wrap;
+      color: #444;
+      direction: ltr;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 500;
+      margin-bottom: 10px;
+    }
+    .badge-ready { background: #EAF3DE; color: #27500A; }
+    .badge-waiting { background: #FAEEDA; color: #633806; }
+  </style>
+</head>
+<body>
+<div class="lms">
+
+  <!-- Simulated LMS activity -->
+  <div class="activity-card">
+    <div class="activity-header">
+      פעילות 3.2 — ראיה מרחבית: בניית קוביות
+    </div>
+    <div class="instructions">
+      בנה סידור קוביות כך שמבט מלפנים יראה את הצורה שנתון לך. לאחר שסיימת, לחץ על "שלח תשובה".
+    </div>
+
+    <!-- THE SIMULATOR EMBEDDED HERE -->
+    <iframe
+      id="cube-sim"
+      src="http://localhost:5173"
+      allow="fullscreen"
+      title="סימולציית קוביות"
+    ></iframe>
+  </div>
+
+  <!-- Teacher / LMS control panel -->
+  <div class="control-panel">
+    <span id="status-badge" class="status-badge badge-waiting">ממתין לחיבור...</span>
+    <h3>לוח בקרה — מורה / LMS</h3>
+
+    <div class="section">
+      <div class="section-title">טען תרגיל מוכן</div>
+      <button onclick="loadChallenge1()">תרגיל 1 — פירמידה</button>
+      <button onclick="loadChallenge2()">תרגיל 2 — מדרגות</button>
+      <button onclick="loadChallenge3()">תרגיל 3 — L-shape</button>
+      <button onclick="sendMsg({type:'RESET'})">איפוס סידור</button>
+    </div>
+
+    <div class="section">
+      <div class="section-title">שנה מצב</div>
+      <button onclick="sendMsg({type:'SET_MODE',mode:'work'})">מצב עבודה</button>
+      <button onclick="sendMsg({type:'SET_MODE',mode:'setup'})">מצב הגדרה</button>
+      <button onclick="sendMsg({type:'SET_VIEW',viewMode:'iso'})">מבט איזומטרי</button>
+      <button onclick="sendMsg({type:'SET_VIEW',viewMode:'front'})">מבט מלפנים</button>
+    </div>
+
+    <div class="section">
+      <div class="section-title">מצב נוכחי</div>
+      <button onclick="getState()">קרא מצב</button>
+      <div class="state-output" id="state-out">—</div>
+    </div>
+
+    <div class="section">
+      <button class="primary" onclick="submitAnswer()">שלח תשובה</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const frame = document.getElementById('cube-sim');
+
+  function sendMsg(msg) {
+    frame.contentWindow.postMessage(msg, '*');
+  }
+
+  function getState() {
+    sendMsg({ type: 'GET_STATE' });
+  }
+
+  function submitAnswer() {
+    sendMsg({ type: 'GET_STATE' });
+    // In a real LMS you'd POST the state to your backend here
+    alert('במערכת אמיתית — כאן הייתם שולחים את המצב לשרת הלמידה.');
+  }
+
+  // Preset challenges
+  function loadChallenge1() {
+    sendMsg({
+      type: 'SET_STATE',
+      rows: 3, cols: 3,
+      grid: [[1,2,1],[2,3,2],[1,2,1]]
+    });
+  }
+
+  function loadChallenge2() {
+    sendMsg({
+      type: 'SET_STATE',
+      rows: 3, cols: 4,
+      grid: [[1,0,0,0],[1,2,0,0],[1,2,3,0]]
+    });
+  }
+
+  function loadChallenge3() {
+    sendMsg({
+      type: 'SET_STATE',
+      rows: 3, cols: 3,
+      grid: [[2,0,0],[2,0,0],[2,2,2]]
+    });
+  }
+
+  // Listen for messages FROM the simulator
+  window.addEventListener('message', e => {
+    if (!e.data?.type) return;
+    const out = document.getElementById('state-out');
+    const badge = document.getElementById('status-badge');
+
+    switch (e.data.type) {
+      case 'READY':
+        badge.textContent = 'מחובר';
+        badge.className = 'status-badge badge-ready';
+        break;
+
+      case 'STATE_CHANGED':
+        out.textContent =
+          `שורות: ${e.data.rows} | עמודות: ${e.data.cols}\n` +
+          `קוביות: ${e.data.stats.total} | גובה מקס: ${e.data.stats.maxHeight}\n` +
+          `גריד: ${JSON.stringify(e.data.grid)}`;
+        break;
+
+      case 'STATE_RESPONSE':
+        out.textContent =
+          `[תגובה ל-GET_STATE]\n` +
+          `${e.data.rows}×${e.data.cols}\n` +
+          JSON.stringify(e.data.grid, null, 2);
+        break;
+    }
+  });
+</script>
+</body>
+</html>
